@@ -13,7 +13,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-                                                               ezgc v1
+                                                               ezgc v1.01
 */
 
 #include <stdlib.h>
@@ -36,14 +36,17 @@ static void *__realloc_default(void *ptr, size_t size)
     return realloc(ptr, size);
 
   free(ptr);
-  return NULL;
+  return NULL; /* this line is why we must implement this function */
 }
 
 static void *(*__realloc)(void *, size_t) = __realloc_default;
 
-void **gchug(void *ptr)
+inline void **gchug(void *ptr)
 {
 	gcblock *block;
+
+  if (ptr == NULL)
+    return NULL;
 	
 	block = __realloc(NULL, sizeof(gcblock));
 	block->ptr = ptr;
@@ -55,13 +58,7 @@ void **gchug(void *ptr)
 
 inline void **gcmalloc(size_t size)
 {
-  void    *ptr;
-  ptr = __realloc(NULL, size);
-
-  if (ptr == NULL)
-    return NULL;
-
-  return gchug(ptr);
+  return gchug(__realloc(NULL, size)); /* i like this malloc */
 }
 
 void **gcrealloc(void **_block, size_t size)
@@ -69,10 +66,8 @@ void **gcrealloc(void **_block, size_t size)
   gcblock *block;
   block = (gcblock*)_block;
 
-  if (block == NULL) {
-    block = (gcblock*) gcmalloc(size);
-    return (void**)block;
-  }
+  if (block == NULL)
+    return gcmalloc(size);
 
   block->ptr = __realloc(block->ptr, size);
 
@@ -84,7 +79,7 @@ void **gcrealloc(void **_block, size_t size)
   return (void**)block;
 }
 
-inline void **gccalloc(size_t num, size_t _size)
+void **gccalloc(size_t num, size_t _size)
 {
   size_t   size;
   void   **ptr;
@@ -98,7 +93,7 @@ inline void **gccalloc(size_t num, size_t _size)
   return ptr;
 }
 
-void gcfree(void **ptr)
+inline void gcfree(void **ptr)
 {
   gcblock  *block;
   void    (*atfree)(void);
@@ -119,12 +114,12 @@ void gcfree(void **ptr)
     atfree();
 }
 
-inline void gcsetrealloc(void *(*func)(void *, size_t))
+void gcsetrealloc(void *(*func)(void *, size_t))
 {
     __realloc = func != NULL ? func : __realloc_default;
 }
 
-inline void gcatfree(void **ptr, void (*func)(void))
+void gcatfree(void **ptr, void (*func)(void))
 {
   ((gcblock *)ptr)->atfree = func;
 }
