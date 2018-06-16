@@ -43,17 +43,17 @@ static void *(*__realloc)(void *, size_t) = __realloc_default;
 
 inline void **gchug(void *ptr)
 {
-	gcblock *block;
+  gcblock *block;
 
   if (ptr == NULL)
     return NULL;
-	
-	block = __realloc(NULL, sizeof(gcblock));
-	block->ptr = ptr;
-	block->refs = 1;
-	block->atfree = NULL;
-	
-	return (void**)block;
+  
+  block = __realloc(NULL, sizeof(gcblock));
+  block->ptr = ptr;
+  block->refs = 1;
+  block->atfree = NULL;
+  
+  return (void**)block;
 }
 
 inline void **gcmalloc(size_t size)
