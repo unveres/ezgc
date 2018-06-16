@@ -4,12 +4,8 @@
 - new function: gchug
 - removal of designated initializers, now it compiles with ANSI C
 - removal of unused block struct member "flags"
-- if compiled with C99 4 functions become inline:
-  - gcmalloc
-  - gccalloc
-  - gcsetrealloc
-  - gcatfree
-- some minor changes in code presentation
+- small optimizations if compiling with C99 due to inline functions
+- some minor code refactoring
 
 ## 1.0
 - first version
