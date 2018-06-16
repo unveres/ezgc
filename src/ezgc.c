@@ -79,12 +79,12 @@ void **gcrealloc(void **_block, size_t size)
   return (void**)block;
 }
 
-void **gccalloc(size_t num, size_t _size)
+void **gccalloc(size_t num, size_t item_size)
 {
   size_t   size;
   void   **ptr;
 
-  size = num * _size;
+  size = num * item_size;
   ptr = gcmalloc(size);
 
   if (ptr != NULL && *ptr != NULL)
