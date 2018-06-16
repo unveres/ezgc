@@ -19,14 +19,23 @@ Ezechiel's Garbage Collector for C, v1
 
 #ifndef _EZGC_H
 #define _EZGC_H
+
 #include <stddef.h>
 
-void gcsetrealloc(void *(*)(void *, size_t));
-void **gcmalloc(size_t);
-void **gcrealloc(void **, size_t);
-void **gccalloc(size_t, size_t);
-void gcfree(void **);
-void gcatfree(void **, void (*)(void));
-void gclink(void ***, void **);
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
+#  define inline
+#endif
 
+/* no inline for ANSI C */
+
+inline void gcsetrealloc(void *(*)(void *, size_t));
+       void **gchug(void *);
+inline void **gcmalloc(size_t);
+inline void **gccalloc(size_t, size_t);
+       void **gcrealloc(void **, size_t);
+       void gcfree(void **);
+inline void gcatfree(void **, void (*)(void));
+       void gclink(void ***, void **);
+
+#undef inline
 #endif
