@@ -147,5 +147,3 @@ void gclink(void ***ref, void **ptr)
 }
 
 #undef inline
-
-/* and the next will be truly the release commit */
