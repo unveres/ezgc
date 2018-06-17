@@ -20,6 +20,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <ezgc.h>
 
+/* ignore inline ANSI C */
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
 #  define inline
 #endif
