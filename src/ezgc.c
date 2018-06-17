@@ -147,3 +147,5 @@ void gclink(void ***ref, void **ptr)
 }
 
 #undef inline
+
+/* next commits will be more self-explanatory */
