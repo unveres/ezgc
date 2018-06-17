@@ -28,9 +28,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 typedef struct {
   void *ptr;
   size_t refs;
-  enum {
-    WEAK = 1
-  } flags;
   void (*atfree)(void);
 } gcblock;
 
@@ -55,7 +52,6 @@ inline void **gchug(void *ptr)
   block = __realloc(NULL, sizeof(gcblock));
   block->ptr = ptr;
   block->refs = 1;
-  block->flags = 0;
   block->atfree = NULL;
   
   return (void**)block;
@@ -142,11 +138,6 @@ void gclink(void ***ref, void **ptr)
 
   if (*old_block != NULL) {
     --(*old_block)->refs;
-
-    if (new_block == *old_block && !(new_block->flags & WEAK)) {
-      --new_block->refs;
-      --new_block->flags |= WEAK;
-    }
 
     if ((*old_block)->refs == 0)
       gcfree((void**)*old_block);
