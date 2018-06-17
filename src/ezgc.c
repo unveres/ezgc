@@ -142,6 +142,11 @@ void gclink(void ***ref, void **ptr)
   if (*old_block != NULL) {
     --(*old_block)->refs;
 
+    if (new_block == *old_block && !(new_block->flags & WEAK)) {
+      --new_block->refs;
+      --new_block->flags |= WEAK;
+    }
+
     if ((*old_block)->refs == 0)
       gcfree((void**)*old_block);
   }
