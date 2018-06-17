@@ -27,6 +27,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 typedef struct {
   void *ptr;
   size_t refs;
+  enum {
+    WEAK = 1
+  } flags;
   void (*atfree)(void);
 } gcblock;
 
@@ -51,6 +54,7 @@ inline void **gchug(void *ptr)
   block = __realloc(NULL, sizeof(gcblock));
   block->ptr = ptr;
   block->refs = 1;
+  block->flags = 0;
   block->atfree = NULL;
   
   return (void**)block;
