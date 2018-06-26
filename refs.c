@@ -22,6 +22,34 @@ ref_t *mkref(int flags)
   return r;
 }
 
+void *rsref(ref_t *ref)
+{
+  ref_t *tmp;        /* copy of ref, used for first loop */
+  int    is_cycling;
+
+  tmp = ref;
+  is_cycling = 0;
+
+  while (tmp && tmp->flags & TOREF) {
+    if (tmp->flags & CYCLING) {
+      is_cycling = 1;
+      break;
+    }
+    tmp->flags |= CYCLING;
+    tmp = tmp->ptr;
+  }
+
+  while (ref && ref->flags & CYCLING) {
+    ref->flags &= ~CYCLING;
+    ref = ref->ptr;
+  }
+
+  if (is_cycling)    
+    return NULL; /* should return something else */
+
+  return ref->ptr;
+}
+
 ref_t *setrefp(ref_t *dest, void *src)
 {
   dest->ptr = src;
@@ -47,5 +75,17 @@ void rmref(ref_t **ref)
 
 int main()
 {
-  return 0;
+  ref_t *foo,
+        *bar;
+
+  foo = mkref(ORDINARY);
+  bar = mkref(ORDINARY);
+
+  setrefr(foo, bar);
+  setrefr(bar, foo);
+  printf("%p\n", rsref(foo));
+  setrefp(bar, (void*)1);
+  printf("%p\n", rsref(foo));
+
+  exit(0);
 }
