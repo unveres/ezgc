@@ -4,41 +4,50 @@
 
 typedef struct {
   void *ptr;
+  void *dep;          /* list of dependent references */
+
   enum {
     ORDINARY,
-    WEAK,         /* type flag: weak reference */
-    SYMBOLIC,     /* type flag: symbolic reference */
-    TOREF = 4,    /* if points to another reference */
-    CYCLING = 8,  /* if reference in cycle */
+    WEAK,             /* type flag: weak reference */
+    SYMBOLIC,         /* type flag: symbolic reference */
+    TOREF = 4,        /* if points to another reference */
+    CYCLING = 8,      /* if reference in cycle */
   } flags;
 } ref_t;
 
-static void __cycle_causeerror()
-{
-  *(char *)0 = 0;
-}
+struct refatom {
+  ref_t *ref;
+  struct refatom *next;
+};
 
-static void __empty_causeerror()
-{
-  *(char *)0 = 0;
-}
+struct reflist {
+  struct refatom *first;
+  struct refatom *last;
+};
 
-const ref_t *const cycleref = (ref_t *)__cycle_causeerror;
-const ref_t *const emptyref = (ref_t *)__empty_causeerror;
+#define DEFINENIL(NAME)                      \
+static void __##NAME##_causeerror()          \
+{                                            \
+  *(char *)0 = 0;                            \
+}                                            \
+                                             \
+void *NAME = (void **)__##NAME##_causeerror; \
 
-#define cycleref ((ref_t *)cycleref)
-#define emptyref ((ref_t *)emptyref)
+DEFINENIL(emptyref);
+DEFINENIL(noref);
+DEFINENIL(cycleref);
 
 ref_t *mkref(int flags)
 {
   ref_t *r;
   r = malloc(sizeof(ref_t));
   r->ptr = NULL;
+  r->dep = NULL;
   r->flags = flags & 3;
   return r;
 }
 
-void *rsref(ref_t *ref)
+void **rsref(ref_t *ref)
 {
   ref_t *tmp;        /* copy of ref, used for first loop */
   int    is_cycling,
@@ -49,7 +58,10 @@ void *rsref(ref_t *ref)
   is_empty = 0;
 
   if (ref == NULL || ref == emptyref || ref == cycleref)
-    return emptyref;
+    return noref;
+
+  if (!(ref->flags & SYMBOLIC))
+    return (void **)ref->ptr;
 
   while (tmp && tmp->flags & TOREF) {
     if (tmp->flags & CYCLING) {
@@ -77,31 +89,45 @@ void *rsref(ref_t *ref)
   if (is_empty)
     return emptyref;
 
-  return ref->ptr;
+  return (void**)ref->ptr;
 }
 
-ref_t *setrefp(ref_t *dest, void *src)
+ref_t *setrefp(ref_t **dest, void **src)
 {
-  dest->ptr = src;
-  dest->flags &= ~TOREF;
-  return dest;
+  if ((*dest)->flags & WEAK)
+    (*dest)->ptr = (void *)src;
+  else
+    gclink((void***)&((*dest)->ptr), src);
+
+  if (src == NULL) {
+    free(*dest);
+    *dest = NULL;
+    return *dest;
+  }
+
+  (*dest)->flags &= ~TOREF;
+  return *dest;
 }
 
-ref_t *setrefr(ref_t *dest, ref_t *src)
+ref_t *setrefr(ref_t **dest, ref_t *src)
 {
-  dest->ptr = src;
-  dest->flags |= TOREF;
-  return dest;
+  if ((*dest)->flags & SYMBOLIC) {
+    (*dest)->ptr = src;
+    (*dest)->flags |= TOREF;
+  } else
+    (*dest)->ptr = (void *)rsref(src);
+
+  return *dest;
 }
 
-void rmref(ref_t **ref)
+/*void rmref(ref_t **ref)
 {
   if (ref == NULL || *ref == NULL)
     return;
 
   free(*ref);
   *ref = NULL;
-}
+}*/
 
 int main()
 {
@@ -110,22 +136,24 @@ int main()
         *lol,
         *XD;
 
-  printf("cycleref: %p\nemptyref: %p\n\n", cycleref, emptyref);
+  printf("noref:    %p\n", noref);
+  printf("emptyref: %p\n", emptyref);
+  printf("cycleref: %p\n", cycleref);
 
-  foo = mkref(ORDINARY);
-  bar = mkref(ORDINARY);
-  lol = mkref(ORDINARY);
-  XD = mkref(ORDINARY);
+  foo = mkref(SYMBOLIC);
+  bar = mkref(SYMBOLIC);
+  lol = mkref(SYMBOLIC);
+  XD = mkref(SYMBOLIC);
 
-  setrefr(foo, bar);
-  setrefr(bar, lol);
-  setrefr(lol, XD);
-  setrefr(XD, foo);
+  setrefr(&foo, bar);
+  setrefr(&bar, lol);
+  setrefr(&lol, XD);
+  setrefr(&XD, foo);
 
   printf("%p\n", rsref(foo));
-  setrefr(XD, NULL);
+  setrefr(&XD, NULL);
   printf("%p\n%p\n", rsref(foo), rsref(NULL));
-  setrefp(XD, NULL);
+  setrefp(&XD, NULL);
   printf("%p\n", rsref(foo));
   
   exit(0);
