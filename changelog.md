@@ -1,4 +1,4 @@
-# ezgc changeslog
+# ezgc changelog
 
 ## 1.01
 - new function: gchug
