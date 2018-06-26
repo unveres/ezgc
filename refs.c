@@ -23,8 +23,11 @@ static void __empty_causeerror()
   *(char *)0 = 0;
 }
 
-ref_t *cycleref = (ref_t *)__cycle_causeerror;
-ref_t *emptyref = (ref_t *)__empty_causeerror;
+const ref_t *const cycleref = (ref_t *)__cycle_causeerror;
+const ref_t *const emptyref = (ref_t *)__empty_causeerror;
+
+#define cycleref ((ref_t *)cycleref)
+#define emptyref ((ref_t *)emptyref)
 
 ref_t *mkref(int flags)
 {
@@ -92,15 +95,27 @@ void rmref(ref_t **ref)
 int main()
 {
   ref_t *foo,
-        *bar;
+        *bar,
+        *lol,
+        *XD;
+
+  printf("cycleref: %p\nemptyref: %p\n\n", cycleref, emptyref);
 
   foo = mkref(ORDINARY);
   bar = mkref(ORDINARY);
+  lol = mkref(ORDINARY);
+  XD = mkref(ORDINARY);
 
   setrefr(foo, bar);
-  setrefr(bar, foo);
-  printf("%p\n", rsref(foo));
-  printf("%p\n", rsref(NULL));
+  setrefr(bar, lol);
+  setrefr(lol, XD);
+  setrefr(XD, foo);
 
+  printf("%p\n", rsref(foo));
+
+  setrefp(XD, NULL);
+
+  printf("%p\n%p\n", rsref(foo), rsref(NULL));
+  
   exit(0);
 }
