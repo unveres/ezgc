@@ -2,7 +2,7 @@
 
 Ezechiel's Garbage Collector for C
 
-Minimalistic library providing garbage collection utilities written in C(99). It's very simple, featuring allocation functions analogical to those which exist in libc (gcmalloc, gcrealloc, gccalloc, gcfree). Example of use:
+Minimalistic library providing garbage collection utilities written in C (supports ANSI C and newer standards as well). It's very simple, featuring allocation functions analogical to those which exist in libc (gcmalloc, gcrealloc, gccalloc, gcfree). Example of use:
 
 ```
 #include <stdio.h>
