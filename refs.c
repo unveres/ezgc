@@ -41,10 +41,12 @@ ref_t *mkref(int flags)
 void *rsref(ref_t *ref)
 {
   ref_t *tmp;        /* copy of ref, used for first loop */
-  int    is_cycling;
+  int    is_cycling,
+         is_empty;
 
   tmp = ref;
   is_cycling = 0;
+  is_empty = 0;
 
   if (ref == NULL || ref == emptyref || ref == cycleref)
     return emptyref;
@@ -54,6 +56,12 @@ void *rsref(ref_t *ref)
       is_cycling = 1;
       break;
     }
+
+    if (tmp->ptr == NULL) {
+      is_empty = 1;
+      break;
+    }
+
     tmp->flags |= CYCLING;
     tmp = tmp->ptr;
   }
@@ -65,6 +73,9 @@ void *rsref(ref_t *ref)
 
   if (is_cycling)    
     return cycleref;
+
+  if (is_empty)
+    return emptyref;
 
   return ref->ptr;
 }
@@ -112,10 +123,10 @@ int main()
   setrefr(XD, foo);
 
   printf("%p\n", rsref(foo));
-
-  setrefp(XD, NULL);
-
+  setrefr(XD, NULL);
   printf("%p\n%p\n", rsref(foo), rsref(NULL));
+  setrefp(XD, NULL);
+  printf("%p\n", rsref(foo));
   
   exit(0);
 }
