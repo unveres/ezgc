@@ -13,6 +13,19 @@ typedef struct {
   } flags;
 } ref_t;
 
+static void __cycle_causeerror()
+{
+  *(char *)0 = 0;
+}
+
+static void __empty_causeerror()
+{
+  *(char *)0 = 0;
+}
+
+ref_t *cycleref = (ref_t *)__cycle_causeerror;
+ref_t *emptyref = (ref_t *)__empty_causeerror;
+
 ref_t *mkref(int flags)
 {
   ref_t *r;
@@ -30,6 +43,9 @@ void *rsref(ref_t *ref)
   tmp = ref;
   is_cycling = 0;
 
+  if (ref == NULL || ref == emptyref || ref == cycleref)
+    return emptyref;
+
   while (tmp && tmp->flags & TOREF) {
     if (tmp->flags & CYCLING) {
       is_cycling = 1;
@@ -45,7 +61,7 @@ void *rsref(ref_t *ref)
   }
 
   if (is_cycling)    
-    return NULL; /* should return something else */
+    return cycleref;
 
   return ref->ptr;
 }
@@ -84,8 +100,7 @@ int main()
   setrefr(foo, bar);
   setrefr(bar, foo);
   printf("%p\n", rsref(foo));
-  setrefp(bar, (void*)1);
-  printf("%p\n", rsref(foo));
+  printf("%p\n", rsref(NULL));
 
   exit(0);
 }
