@@ -145,5 +145,3 @@ void gclink(void ***ref, void **ptr)
 
   *ref = ptr;
 }
-
-#undef inline
